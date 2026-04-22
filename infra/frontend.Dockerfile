@@ -20,7 +20,9 @@ RUN dotnet publish "GoodHamburger.Frontend.csproj" -c Release -o /app/publish
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
+# Copia o conteúdo da wwwroot E o conteúdo da raiz do publish (caso o _framework esteja lá)
 COPY --from=build /app/publish/wwwroot .
+COPY --from=build /app/publish .
 
 # Copy custom nginx config
 COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
