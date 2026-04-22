@@ -61,6 +61,3 @@ Para detalhes técnicos, consulte a pasta `/docs`:
 - **Infra as Code**: Ambiente 100% reprodutível via Docker na pasta `/infra`.
 - **Busca Híbrida**: Localização de pedidos por ID e itens por nome com troca automática de categoria.
 - **Cálculos Reativos**: Descontos de combo aplicados em tempo real no frontend e validados no backend.
-
----
-Desenvolvido como desafio técnico para Good Hamburger.
