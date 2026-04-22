@@ -1,28 +1,16 @@
 # Build Stage
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-
-# Copy all project files first for restore
-COPY ["frontend/GoodHamburger.Frontend.csproj", "frontend/"]
-COPY ["backend/src/GoodHamburger.Application/GoodHamburger.Application.csproj", "backend/src/GoodHamburger.Application/"]
-COPY ["backend/src/GoodHamburger.Domain/GoodHamburger.Domain.csproj", "backend/src/GoodHamburger.Domain/"]
-
-RUN dotnet restore "frontend/GoodHamburger.Frontend.csproj"
-
-# Copy the rest of the source code
 COPY . .
-
-# Publish from the frontend directory
-WORKDIR /src/frontend
-RUN dotnet publish "GoodHamburger.Frontend.csproj" -c Release -o /app/publish /p:UseAppHost=false /p:PublishTrimmed=false /p:StaticWebAssetsEnabled=true
+RUN dotnet restore "frontend/GoodHamburger.Frontend.csproj"
+RUN dotnet publish "frontend/GoodHamburger.Frontend.csproj" -c Release -o /app/publish
 
 # Runtime Stage (Nginx)
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
-# Copia o conteúdo da wwwroot E o conteúdo da raiz do publish (caso o _framework esteja lá)
+# Copia APENAS o conteúdo da pasta wwwroot gerada pelo publish para a raiz do Nginx
 COPY --from=build /app/publish/wwwroot .
-COPY --from=build /app/publish .
 
 # Copy custom nginx config
 COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
