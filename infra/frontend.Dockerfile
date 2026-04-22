@@ -14,7 +14,7 @@ COPY . .
 
 # Publish from the frontend directory
 WORKDIR /src/frontend
-RUN dotnet publish "GoodHamburger.Frontend.csproj" -c Release -o /app/publish
+RUN dotnet publish "GoodHamburger.Frontend.csproj" -c Release -o /app/publish /p:UseAppHost=false /p:PublishTrimmed=false /p:StaticWebAssetsEnabled=true
 
 # Runtime Stage (Nginx)
 FROM nginx:alpine
