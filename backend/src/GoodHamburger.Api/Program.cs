@@ -16,7 +16,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5151", "https://localhost:5151")
+        policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
@@ -39,7 +39,6 @@ if (app.Environment.IsDevelopment())
         options.RouteTemplate = "openapi/{documentName}.json";
     });
     app.MapScalarApiReference();
-    app.UseHttpsRedirection();
 }
 
 app.UseStaticFiles();
