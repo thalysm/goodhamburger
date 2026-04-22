@@ -23,6 +23,6 @@ data/
 Thumbs.db
 
 # Docker files
-infra/
+# infra/ - Removed to allow COPY infra/nginx.conf in Dockerfile
 docker-compose.yml
 Dockerfile
