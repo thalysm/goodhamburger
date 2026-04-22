@@ -8,34 +8,43 @@
 
 <MudLayout>
     <MudAppBar Elevation="0" Color="Color.Surface">
-        <div class="d-flex align-center mr-8">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Primary" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <div class="d-flex align-center mr-2 mr-md-6">
             <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Color="Color.Primary" Class="mr-2" />
-            <div>
+            <MudHidden Breakpoint="Breakpoint.Xs">
                 <MudText Typo="Typo.h6" Color="Color.Primary" Class="line-height-1" Style="font-weight: 900; letter-spacing: 1px">GOOD HAMBURGER</MudText>
-            </div>
+            </MudHidden>
         </div>
-        <MudTextField T="string"
-                      Value="SearchService.SearchQuery" 
-                      ValueChanged="@(s => SearchService.SearchQuery = s)"
-                      Placeholder="@GetSearchPlaceholder()" 
-                      Adornment="Adornment.Start" 
-                      AdornmentIcon="@Icons.Material.Filled.Search" 
-                      Variant="Variant.Outlined" 
-                      Margin="Margin.Dense"
-                      Immediate="true"
-                      Style="max-width: 400px; background-color: #f5f5f5" />
+        
+        <div class="flex-grow-1 d-flex justify-center mx-1 mx-md-4" style="max-width: 500px">
+            <MudTextField T="string"
+                          Value="SearchService.SearchQuery" 
+                          ValueChanged="@(s => SearchService.SearchQuery = s)"
+                          Placeholder="@GetSearchPlaceholder()" 
+                          Adornment="Adornment.Start" 
+                          AdornmentIcon="@Icons.Material.Filled.Search" 
+                          Variant="Variant.Outlined" 
+                          Margin="Margin.Dense"
+                          Immediate="true"
+                          FullWidth="true"
+                          Style="background-color: #f5f5f5" />
+        </div>
+
         <MudSpacer />
+        
         <div class="d-flex align-center">
-            <MudText Color="Color.Success" Typo="Typo.subtitle2" Class="mr-4">● LOJA ABERTA</MudText>
-            <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" />
-            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Primary" />
+            <MudHidden Breakpoint="Breakpoint.SmAndDown">
+                <MudText Color="Color.Success" Typo="Typo.subtitle2" Class="mr-4">● LOJA ABERTA</MudText>
+            </MudHidden>
+            <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" Size="Size.Small" />
+            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Primary" Size="Size.Small" />
         </div>
     </MudAppBar>
-    <MudDrawer Open="true" ClipMode="DrawerClipMode.Always" Elevation="1">
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="1" Variant="@DrawerVariant.Responsive">
         <NavMenu />
     </MudDrawer>
     <MudMainContent>
-        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="my-8">
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="my-4 my-md-8">
             @Body
         </MudContainer>
     </MudMainContent>
@@ -52,6 +61,13 @@
 @code {
     [Inject] private SearchService SearchService { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    bool _drawerOpen = true;
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
 
     protected override void OnInitialized()
     {
