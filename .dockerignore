@@ -1,0 +1,28 @@
+# Build artifacts
+**/bin/
+**/obj/
+out/
+
+# Source control
+.git/
+.gitignore
+
+# IDEs
+.vs/
+.vscode/
+.idea/
+
+# Database
+**/*.db
+**/*.db-shm
+**/*.db-wal
+data/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files
+infra/
+docker-compose.yml
+Dockerfile
