@@ -1,0 +1,24 @@
+@inherits LayoutComponentBase
+@namespace GoodHamburger.Frontend.Layout
+
+<MudThemeProvider Theme="_currentTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudMainContent>
+        @Body
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private MudTheme _currentTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#FF5A1F",
+            Background = "#ffffff"
+        }
+    };
+}

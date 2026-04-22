@@ -1,0 +1,88 @@
+@inherits LayoutComponentBase
+@namespace GoodHamburger.Frontend.Layout
+
+<MudThemeProvider Theme="_currentTheme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0" Color="Color.Surface">
+        <div class="d-flex align-center mr-8">
+            <MudIcon Icon="@Icons.Material.Filled.RestaurantMenu" Color="Color.Primary" Class="mr-2" />
+            <div>
+                <MudText Typo="Typo.h6" Color="Color.Primary" Class="line-height-1" Style="font-weight: 900; letter-spacing: 1px">GOOD HAMBURGER</MudText>
+            </div>
+        </div>
+        <MudTextField T="string"
+                      Value="SearchService.SearchQuery" 
+                      ValueChanged="@(s => SearchService.SearchQuery = s)"
+                      Placeholder="@GetSearchPlaceholder()" 
+                      Adornment="Adornment.Start" 
+                      AdornmentIcon="@Icons.Material.Filled.Search" 
+                      Variant="Variant.Outlined" 
+                      Margin="Margin.Dense"
+                      Immediate="true"
+                      Style="max-width: 400px; background-color: #f5f5f5" />
+        <MudSpacer />
+        <div class="d-flex align-center">
+            <MudText Color="Color.Success" Typo="Typo.subtitle2" Class="mr-4">● LOJA ABERTA</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Notifications" Color="Color.Primary" />
+            <MudIconButton Icon="@Icons.Material.Filled.AccountCircle" Color="Color.Primary" />
+        </div>
+    </MudAppBar>
+    <MudDrawer Open="true" ClipMode="DrawerClipMode.Always" Elevation="1">
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="my-8">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+<style>
+    .line-height-1 {
+        line-height: 1;
+    }
+</style>
+
+@implements IDisposable
+
+@code {
+    [Inject] private SearchService SearchService { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += HandleLocationChanged;
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e) => StateHasChanged();
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= HandleLocationChanged;
+    }
+
+    private string GetSearchPlaceholder()
+    {
+        var relativePath = Nav.ToBaseRelativePath(Nav.Uri).ToLower();
+        if (string.IsNullOrEmpty(relativePath) || relativePath == "orders")
+            return "BUSCAR PEDIDO (ID)...";
+        
+        return "BUSCAR NO CARDÁPIO...";
+    }
+
+    private MudTheme _currentTheme = new MudTheme()
+    {
+        PaletteLight = new PaletteLight()
+        {
+            Primary = "#FF5A1F",
+            AppbarBackground = "#ffffff",
+            DrawerBackground = "#ffffff",
+            Surface = "#ffffff",
+            Background = "#f8f9fa"
+        }
+    };
+}

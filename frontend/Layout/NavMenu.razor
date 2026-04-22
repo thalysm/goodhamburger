@@ -1,0 +1,19 @@
+@namespace GoodHamburger.Frontend.Layout
+<MudNavMenu>
+    <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Dashboard">Painel Principal</MudNavLink>
+    <MudNavLink Href="/orders" Icon="@Icons.Material.Filled.ListAlt">Todos os Pedidos</MudNavLink>
+    <MudNavLink Href="/menu" Icon="@Icons.Material.Filled.MenuBook">Catálogo Público</MudNavLink>
+
+    <MudSpacer />
+    
+    <div class="pa-4 mt-auto">
+        <MudButton Variant="Variant.Filled" 
+                   Color="Color.Dark" 
+                   FullWidth="true" 
+                   Href="/orders/new"
+                   Class="py-3"
+                   Style="background-color: #1a1a1a; color: white">
+            NOVO PEDIDO
+        </MudButton>
+    </div>
+</MudNavMenu>

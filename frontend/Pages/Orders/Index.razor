@@ -1,0 +1,142 @@
+@page "/orders"
+@implements IDisposable
+
+<MudText Typo="Typo.h3" Class="font-weight-black mb-6">TODOS OS PEDIDOS</MudText>
+
+<MudPaper Elevation="1" Class="pa-6">
+    <MudTable Items="FilteredOrders" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Loading="_loading">
+        <HeaderContent>
+            <MudTh>ID PEDIDO</MudTh>
+            <MudTh>CLIENTE</MudTh>
+            <MudTh>ITENS</MudTh>
+            <MudTh>TOTAL</MudTh>
+            <MudTh>STATUS</MudTh>
+            <MudTh>AÇÕES</MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="ID PEDIDO"><b>#@context.Id.ToString()[..7].ToUpper()</b></MudTd>
+            <MudTd DataLabel="CLIENTE">@context.CustomerName</MudTd>
+            <MudTd DataLabel="ITENS">
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var item in context.Items)
+                    {
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Dark">@item.Name</MudChip>
+                    }
+                </div>
+            </MudTd>
+            <MudTd DataLabel="TOTAL">R$ @context.Total.ToString("N2")</MudTd>
+            <MudTd DataLabel="STATUS">
+                <MudSelect T="OrderStatus" 
+                           Value="@context.Status" 
+                           ValueChanged="@(s => UpdateStatus(context, s))"
+                           Dense="true" 
+                           Margin="Margin.Dense" 
+                           Variant="Variant.Outlined"
+                           Disabled="_isUpdating">
+                    @foreach (OrderStatus status in Enum.GetValues(typeof(OrderStatus)))
+                    {
+                        <MudSelectItem Value="@status">@TranslateStatus(status)</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudTd>
+            <MudTd>
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" OnClick="() => DeleteOrder(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+</MudPaper>
+
+@code {
+    private List<OrderResponse> _orders = new();
+    private bool _loading = true;
+    private bool _isUpdating = false;
+    [Inject] private HttpClient HttpClient { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private SearchService SearchService { get; set; } = default!;
+
+    private IEnumerable<OrderResponse> FilteredOrders => 
+        string.IsNullOrWhiteSpace(SearchService.SearchQuery) 
+            ? _orders 
+            : _orders.Where(o => o.Id.ToString().Contains(SearchService.SearchQuery, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        SearchService.OnSearchChanged += HandleSearchChanged;
+        await LoadOrders();
+    }
+
+    private void HandleSearchChanged(string query) => StateHasChanged();
+    public void Dispose() => SearchService.OnSearchChanged -= HandleSearchChanged;
+
+    private async Task LoadOrders()
+    {
+        _loading = true;
+        try 
+        {
+            _orders = await HttpClient.GetFromJsonAsync<List<OrderResponse>>("api/orders") ?? new();
+        }
+        catch (Exception)
+        {
+            Snackbar.Add("Erro ao carregar pedidos do servidor.", Severity.Error);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task UpdateStatus(OrderResponse order, OrderStatus newStatus)
+    {
+        if (order.Status == newStatus) return;
+        
+        _isUpdating = true;
+        try 
+        {
+            var request = new UpdateOrderRequest(order.CustomerName, newStatus, order.Items.Select(i => i.MenuItemId).ToList());
+            var response = await HttpClient.PutAsJsonAsync($"api/orders/{order.Id}", request);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var updatedOrder = await response.Content.ReadFromJsonAsync<OrderResponse>();
+                if (updatedOrder != null)
+                {
+                    var index = _orders.FindIndex(o => o.Id == updatedOrder.Id);
+                    if (index != -1) _orders[index] = updatedOrder;
+                    Snackbar.Add($"Pedido de {updatedOrder.CustomerName} atualizado para {TranslateStatus(newStatus)}", Severity.Success);
+                }
+            }
+            else 
+            {
+                Snackbar.Add($"Erro ao atualizar status.", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Falha na comunicação: {ex.Message}", Severity.Error);
+        }
+        finally 
+        {
+            _isUpdating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task DeleteOrder(Guid id)
+    {
+        var response = await HttpClient.DeleteAsync($"api/orders/{id}");
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Pedido removido!", Severity.Success);
+            await LoadOrders();
+        }
+    }
+
+    private string TranslateStatus(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => "PENDENTE",
+        OrderStatus.InProgress => "EM ANDAMENTO",
+        OrderStatus.Delivery => "ENTREGA",
+        OrderStatus.Finished => "FINALIZADO",
+        _ => status.ToString().ToUpper()
+    };
+}

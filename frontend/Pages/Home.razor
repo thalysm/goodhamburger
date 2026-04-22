@@ -1,0 +1,114 @@
+@page "/"
+@implements IDisposable
+
+<MudText Typo="Typo.h4" Class="mb-6 font-weight-bold">PAINEL DE CONTROLE</MudText>
+
+<MudGrid>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">RECEITA TOTAL (HOJE)</MudText>
+            <MudText Typo="Typo.h4" Class="font-weight-bold">R$ 2.480,00</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Success">↗ +12% em relação a ontem</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">PEDIDOS ATIVOS</MudText>
+            <MudText Typo="Typo.h4" Class="font-weight-bold">18</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Warning">🕒 4 pendentes de ação</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">TEMPO MÉDIO PREPARO</MudText>
+            <MudText Typo="Typo.h4" Class="font-weight-bold">14m 20s</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Info">⊙ Meta: 15m</MudText>
+        </MudPaper>
+    </MudItem>
+    <MudItem xs="12" sm="6" md="3">
+        <MudPaper Class="pa-4" Elevation="1">
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">ITEM MAIS VENDIDO</MudText>
+            <MudText Typo="Typo.h4" Class="font-weight-bold">X Bacon</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">☆ 42 vendidos hoje</MudText>
+        </MudPaper>
+    </MudItem>
+
+    <MudItem xs="12">
+        <MudPaper Class="pa-6 mt-4" Elevation="1">
+            <div class="d-flex align-center justify-space-between mb-4">
+                <MudText Typo="Typo.h5" Class="font-weight-bold">PEDIDOS RECENTES</MudText>
+                <div>
+                    <MudButton StartIcon="@Icons.Material.Filled.FilterList" Variant="Variant.Outlined" Class="mr-2">FILTRAR</MudButton>
+                    <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Outlined">EXPORTAR</MudButton>
+                </div>
+            </div>
+
+            <MudTable Items="FilteredOrders" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0">
+                <HeaderContent>
+                    <MudTh>ID PEDIDO</MudTh>
+                    <MudTh>CLIENTE</MudTh>
+                    <MudTh>ITENS</MudTh>
+                    <MudTh>TOTAL</MudTh>
+                    <MudTh>STATUS</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="ID PEDIDO"><b>#@context.Id.ToString()[..7].ToUpper()</b></MudTd>
+                    <MudTd DataLabel="CLIENTE">@context.CustomerName</MudTd>
+                    <MudTd DataLabel="ITENS">@context.Items.Count items</MudTd>
+                    <MudTd DataLabel="TOTAL">R$ @context.Total.ToString("N2")</MudTd>
+                    <MudTd DataLabel="STATUS">
+                        <MudChip T="string" Color="@GetStatusColor(context.Status)" Variant="Variant.Outlined" Size="Size.Small">
+                            @TranslateStatus(context.Status)
+                        </MudChip>
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+    private List<OrderResponse> _recentOrders = new();
+    [Inject] private HttpClient HttpClient { get; set; } = default!;
+    [Inject] private SearchService SearchService { get; set; } = default!;
+
+    private IEnumerable<OrderResponse> FilteredOrders => 
+        string.IsNullOrWhiteSpace(SearchService.SearchQuery) 
+            ? _recentOrders 
+            : _recentOrders.Where(o => o.Id.ToString().Contains(SearchService.SearchQuery, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        SearchService.OnSearchChanged += HandleSearchChanged;
+        try
+        {
+            _recentOrders = await HttpClient.GetFromJsonAsync<List<OrderResponse>>("api/orders") ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching orders: {ex.Message}");
+        }
+    }
+
+    private void HandleSearchChanged(string query) => StateHasChanged();
+
+    public void Dispose() => SearchService.OnSearchChanged -= HandleSearchChanged;
+
+    private Color GetStatusColor(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => Color.Default,
+        OrderStatus.InProgress => Color.Warning,
+        OrderStatus.Delivery => Color.Info,
+        OrderStatus.Finished => Color.Success,
+        _ => Color.Default
+    };
+
+    private string TranslateStatus(OrderStatus status) => status switch
+    {
+        OrderStatus.Pending => "PENDENTE",
+        OrderStatus.InProgress => "EM ANDAMENTO",
+        OrderStatus.Delivery => "ENTREGA",
+        OrderStatus.Finished => "FINALIZADO",
+        _ => status.ToString().ToUpper()
+    };
+}

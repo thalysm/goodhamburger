@@ -1,0 +1,220 @@
+@page "/orders/new"
+@implements IDisposable
+
+<MudGrid>
+    <MudItem xs="12" md="8">
+        <MudText Typo="Typo.h3" Class="font-weight-black mb-4">NOVO PEDIDO</MudText>
+        
+        <div class="d-flex mb-6">
+            <MudChip T="string" Variant="Variant.Filled" Color="@(_activeCategory == "Sandwich" ? Color.Dark : Color.Default)" OnClick='() => _activeCategory = "Sandwich"'>SANDUÍCHES</MudChip>
+            <MudChip T="string" Variant="Variant.Filled" Color="@(_activeCategory == "Side" ? Color.Dark : Color.Default)" OnClick='() => _activeCategory = "Side"'>ACOMPANHAMENTOS</MudChip>
+            <MudChip T="string" Variant="Variant.Filled" Color="@(_activeCategory == "Drink" ? Color.Dark : Color.Default)" OnClick='() => _activeCategory = "Drink"'>REFRIGERANTE</MudChip>
+        </div>
+
+        <MudText Typo="Typo.h5" Class="font-weight-bold mb-4">@TranslateType(_activeCategory).ToUpper()S</MudText>
+
+        <MudGrid>
+            @foreach (var item in FilteredItems)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Elevation="1" Class="rounded-lg overflow-hidden d-flex flex-column animate__animated animate__fadeIn" Style="height: 100%">
+                        <div style="background-color: #f5f5f5; height: 180px; display: flex; align-items: center; justify-content: center">
+                            <MudImage Src="@GetImageUrl(item.ImageUrl)" Style="max-height: 160px; max-width: 90%" ObjectFit="ObjectFit.Contain" />
+                        </div>
+                        <MudCardContent Class="flex-grow-1">
+                            <div class="d-flex justify-space-between align-center mb-2">
+                                <MudText Typo="Typo.h6" Class="font-weight-bold">@item.Name</MudText>
+                                <MudText Color="Color.Primary" Typo="Typo.subtitle1" Style="font-weight: 700">R$ @item.Price.ToString("N2")</MudText>
+                            </div>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Opção premium preparada com ingredientes frescos e selecionados para o seu @TranslateType(item.Type).
+                            </MudText>
+                        </MudCardContent>
+                        <MudCardActions>
+                            <MudButton Variant="Variant.Outlined" FullWidth="true" OnClick="() => AddToCart(item)">ADICIONAR</MudButton>
+                        </MudCardActions>
+                    </MudCard>
+                </MudItem>
+            }
+            @if (!FilteredItems.Any())
+            {
+                <MudItem xs="12">
+                    <MudAlert Severity="Severity.Normal" Variant="Variant.Outlined" Class="mt-4">Nenhum item encontrado com este nome.</MudAlert>
+                </MudItem>
+            }
+        </MudGrid>
+    </MudItem>
+
+    <MudItem xs="12" md="4">
+        <MudPaper Elevation="1" Class="pa-6 sticky-top">
+            <MudText Typo="Typo.h5" Class="font-weight-bold mb-6">RESUMO DO PEDIDO</MudText>
+            
+            <MudTextField @bind-Value="_customerName" Label="NOME DO CLIENTE" Variant="Variant.Outlined" Margin="Margin.Dense" Class="mb-4" />
+            
+            <MudDivider Class="my-4" />
+
+            @if (!_cart.Any())
+            {
+                <div class="d-flex flex-column align-center py-8">
+                    <MudIcon Icon="@Icons.Material.Filled.ShoppingCart" Color="Color.Default" Size="Size.Large" Class="mb-2" />
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">Seu carrinho está vazio</MudText>
+                </div>
+            }
+            else
+            {
+                @foreach (var item in _cart)
+                {
+                    <div class="d-flex justify-space-between align-center mb-2 animate__animated animate__fadeIn">
+                        <div style="flex-grow: 1">
+                            <MudText Typo="Typo.subtitle2">1X @item.Name</MudText>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">@TranslateType(item.Type)</MudText>
+                        </div>
+                        <MudText Typo="Typo.subtitle2" Class="mr-2">R$ @item.Price.ToString("N2")</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Size="Size.Small" Color="Color.Error" OnClick="() => RemoveFromCart(item)" />
+                    </div>
+                }
+            }
+
+            <MudDivider Class="my-4" />
+
+            <div class="d-flex justify-space-between mb-2">
+                <MudText Typo="Typo.body2">SUBTOTAL</MudText>
+                <MudText Typo="Typo.body2">R$ @_subtotal.ToString("N2")</MudText>
+            </div>
+            <div class="d-flex justify-space-between mb-2">
+                <MudText Typo="Typo.body2" Color="Color.Primary">DESCONTO COMBO</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Primary">-R$ @_discount.ToString("N2") (@(_discountPercentage * 100)%)</MudText>
+            </div>
+            
+            <div class="d-flex justify-space-between mt-4">
+                <MudText Typo="Typo.h5" Class="font-weight-bold">TOTAL FINAL</MudText>
+                <MudText Typo="Typo.h5" Color="Color.Primary" Class="font-weight-bold">R$ @_total.ToString("N2")</MudText>
+            </div>
+
+            <MudButton Variant="Variant.Filled" 
+                       Color="Color.Primary" 
+                       FullWidth="true" 
+                       Class="mt-6 py-3" 
+                       OnClick="SubmitOrder"
+                       Disabled="@(!_cart.Any() || string.IsNullOrWhiteSpace(_customerName))">
+                FINALIZAR PEDIDO
+            </MudButton>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+<style>
+    .sticky-top {
+        position: sticky;
+        top: 100px;
+    }
+</style>
+
+@code {
+    private List<MenuItemResponse> _menuItems = new();
+    private List<MenuItemResponse> _cart = new();
+    private string _customerName = "";
+    private string _activeCategory = "Sandwich";
+    
+    private decimal _subtotal => _cart.Sum(i => i.Price);
+    private decimal _discount => _subtotal * _discountPercentage;
+    private decimal _total => _subtotal - _discount;
+    private decimal _discountPercentage = 0;
+
+    [Inject] private HttpClient HttpClient { get; set; } = default!;
+    [Inject] private ISnackbar Snackbar { get; set; } = default!;
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private SearchService SearchService { get; set; } = default!;
+
+    private IEnumerable<MenuItemResponse> FilteredItems => 
+        string.IsNullOrWhiteSpace(SearchService.SearchQuery) 
+            ? _menuItems.Where(i => i.Type == _activeCategory)
+            : _menuItems.Where(i => i.Type == _activeCategory && i.Name.Contains(SearchService.SearchQuery, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        SearchService.OnSearchChanged += HandleSearchChanged;
+        try {
+            _menuItems = await HttpClient.GetFromJsonAsync<List<MenuItemResponse>>("api/menu") ?? new();
+        } catch {
+            Snackbar.Add("Erro ao conectar com servidor.", Severity.Error);
+        }
+    }
+
+    private void HandleSearchChanged(string query)
+    {
+        if (!string.IsNullOrWhiteSpace(query))
+        {
+            // Tenta encontrar um item com esse nome e muda a aba se necessário
+            var match = _menuItems.FirstOrDefault(i => i.Name.Contains(query, StringComparison.OrdinalIgnoreCase));
+            if (match != null && match.Type != _activeCategory)
+            {
+                _activeCategory = match.Type;
+            }
+        }
+        StateHasChanged();
+    }
+
+    public void Dispose() => SearchService.OnSearchChanged -= HandleSearchChanged;
+
+    private void AddToCart(MenuItemResponse item)
+    {
+        if (_cart.Any(i => i.Type == item.Type))
+        {
+            Snackbar.Add($"O pedido não pode conter itens duplicados do tipo {TranslateType(item.Type)}.", Severity.Error);
+            return;
+        }
+        _cart.Add(item);
+        CalculateDiscount();
+
+        if (_activeCategory == "Sandwich") _activeCategory = "Side";
+        else if (_activeCategory == "Side") _activeCategory = "Drink";
+        
+        // Limpa a busca ao adicionar para não ficar "preso" no resultado
+        SearchService.SearchQuery = "";
+    }
+
+    private void RemoveFromCart(MenuItemResponse item)
+    {
+        _cart.Remove(item);
+        CalculateDiscount();
+    }
+
+    private void CalculateDiscount()
+    {
+        bool hasSandwich = _cart.Any(i => i.Type == "Sandwich");
+        bool hasSide = _cart.Any(i => i.Type == "Side");
+        bool hasDrink = _cart.Any(i => i.Type == "Drink");
+
+        if (hasSandwich && hasSide && hasDrink) _discountPercentage = 0.20m;
+        else if (hasSandwich && hasDrink) _discountPercentage = 0.15m;
+        else if (hasSandwich && hasSide) _discountPercentage = 0.10m;
+        else _discountPercentage = 0;
+    }
+
+    private async Task SubmitOrder()
+    {
+        var request = new CreateOrderRequest(_customerName, _cart.Select(i => i.Id).ToList());
+        var response = await HttpClient.PostAsJsonAsync("api/orders", request);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            Snackbar.Add("Pedido realizado com sucesso!", Severity.Success);
+            Nav.NavigateTo("/orders");
+        }
+        else
+        {
+            Snackbar.Add("Erro ao realizar pedido.", Severity.Error);
+        }
+    }
+
+    private string GetImageUrl(string? url) => string.IsNullOrEmpty(url) ? "https://via.placeholder.com/200" : $"{HttpClient.BaseAddress}{url.TrimStart('/')}";
+
+    private string TranslateType(string type) => type switch
+    {
+        "Sandwich" => "Sanduíche",
+        "Side" => "Acompanhamento",
+        "Drink" => "Refrigerante",
+        _ => type
+    };
+}
