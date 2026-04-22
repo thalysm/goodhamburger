@@ -61,12 +61,9 @@ public class OrdersApiTest : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var menuResponse = await _client.GetFromJsonAsync<List<MenuItemResponse>>("api/menu");
         var sandwich1Id = menuResponse!.First(i => i.Type == "Sandwich").Id;
-        // In the seeded DB, we usually only have one sample of each for now, but let's assume we can pick two sandwiches
-        // If the seed has multiple sandwiches, this will work. 
-        // Our current seed has X-Burger, X-Egg, X-Bacon.
         var sandwiches = menuResponse!.Where(i => i.Type == "Sandwich").ToList();
         
-        if (sandwiches.Count < 2) return; // Skip if seed is too small
+        if (sandwiches.Count < 2) return; 
 
         var request = new CreateOrderRequest("Integration Test", new List<Guid> { sandwiches[0].Id, sandwiches[1].Id });
 

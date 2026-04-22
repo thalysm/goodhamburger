@@ -1,6 +1,6 @@
 # Documentação da API
 
-A API está exposta via Swagger/Scalar para fácil consulta e teste.
+A API está exposta via Scalar para consulta.
 
 ## Endpoints Principais
 
