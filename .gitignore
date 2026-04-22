@@ -1,0 +1,38 @@
+# --- COMUM (.NET 10) ---
+[Bb]in/
+[Oo]bj/
+[Tt]est[Rr]esults/
+publish/
+dist/
+
+# --- BACKEND (EF Core & SQLite) ---
+# Ignora arquivos de banco de dados locais
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# User-specific & Secrets
+usersecrets.json
+appsettings.Development.json
+*.user
+
+# --- FRONTEND (Blazor WebAssembly) ---
+# Configurações específicas de publicação do Blazor
+/frontend/bin/
+/frontend/obj/
+/frontend/wwwroot/service-worker-assets.js
+/frontend/wwwroot/_framework/
+
+# --- IDEs & FERRAMENTAS ---
+.vs/
+.vscode/
+.idea/
+.history/
+.gemini/
+.antigravity/
+
+# --- SISTEMA OPERACIONAL ---
+.DS_Store
+Thumbs.db
+desktop.ini
