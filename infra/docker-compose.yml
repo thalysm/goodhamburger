@@ -3,19 +3,19 @@ version: '3.8'
 services:
   backend:
     build:
-      context: ..
+      context: .
       dockerfile: infra/backend.Dockerfile
     container_name: goodhamburger-api
     ports:
       - "5269:8080"
     volumes:
-      - ../data:/app/data
+      - ./data:/app/data
     networks:
       - goodhamburger-network
 
   frontend:
     build:
-      context: ..
+      context: .
       dockerfile: infra/frontend.Dockerfile
     container_name: goodhamburger-web
     ports:
