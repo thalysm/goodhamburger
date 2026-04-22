@@ -15,13 +15,13 @@ COPY backend/src/GoodHamburger.Application/ backend/src/GoodHamburger.Applicatio
 COPY backend/src/GoodHamburger.Domain/ backend/src/GoodHamburger.Domain/
 
 WORKDIR /app/frontend
-RUN dotnet publish "GoodHamburger.Frontend.csproj" -c Release -o /out
+RUN dotnet publish "GoodHamburger.Frontend.csproj" -c Release -o /app/publish
 
 # Runtime Stage (Nginx)
 FROM nginx:alpine
 WORKDIR /usr/share/nginx/html
 RUN rm -rf ./*
-COPY --from=build /out/wwwroot .
+COPY --from=build /app/publish/wwwroot .
 
 # Copy custom nginx config - this file will be in infra/ too
 COPY infra/nginx.conf /etc/nginx/conf.d/default.conf
