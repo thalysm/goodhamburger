@@ -61,3 +61,10 @@ Para detalhes técnicos, consulte a pasta `/docs`:
 - **Infra as Code**: Ambiente 100% reprodutível via Docker na pasta `/infra`.
 - **Busca Híbrida**: Localização de pedidos por ID e itens por nome com troca automática de categoria.
 - **Cálculos Reativos**: Descontos de combo aplicados em tempo real no frontend e validados no backend.
+
+---
+## Próximos Passos:
+
+- [] Utilizar banco de dados relacional (PostgreSQL, MySQL, etc)
+- [] Adicionar autenticação e autorização (OAuth, JWT, etc)
+- [] Paginação de pedidos para não sobrecarregar a aplicação
